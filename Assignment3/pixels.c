@@ -65,16 +65,20 @@ void writeImageFile(char * filename, const ppm_t * image) {
     //Write the max value of our image
     fprintf(file_ptr, "%d\n", image->max_value);
 
-    //Start to write our matrixes of pixels
-    for (i = 0; i < image->height; i++)
-    {
-        for (j = 0; j < image->width; j++)
+    if(!strncmp(image->magic_number, "P3", 3)) {
+        //Start to write our matrixes of pixels
+        for (i = 0; i < image->height; i++)
         {
-            fprintf(file_ptr, "%hd ", image->pixels[i][j].data[R]);
-            fprintf(file_ptr, "%hd ", image->pixels[i][j].data[G]);
-            fprintf(file_ptr, "%hd ", image->pixels[i][j].data[B]);
+            for (j = 0; j < image->width; j++)
+            {
+                fprintf(file_ptr, "%hd ", image->pixels[i][j].data[R]);
+                fprintf(file_ptr, "%hd ", image->pixels[i][j].data[G]);
+                fprintf(file_ptr, "%hd ", image->pixels[i][j].data[B]);
+            }
+            fprintf(file_ptr, "\n");
         }
-        fprintf(file_ptr, "\n");
+    } else {
+        fwrite(image->pixels[0], sizeof(pixel_t), image->width * image->height, file_ptr);
     }
     fclose(file_ptr);
 }
@@ -94,7 +98,6 @@ void getBinaryPixels(ppm_t * image, FILE * file_ptr) {
 }
 
 void getNegativeImage(ppm_t * image) {
-
     for (int i = 0; i < image->height; i++) //Iterate through all of our rows
     {
         for (int j = 0; j < image->width; j++) //Iterate through all of our columns

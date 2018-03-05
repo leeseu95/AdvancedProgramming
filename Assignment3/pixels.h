@@ -16,7 +16,7 @@ typedef struct pixel_struct {
     // unsigned short red;
     // unsigned short green;
     // unsigned short blue;
-    unsigned short data[3];
+    signed short int data[3];
 } pixel_t;
 
 //Structure for an image
