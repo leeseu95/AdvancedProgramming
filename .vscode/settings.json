@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "string.h": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "signal.h": "c",
+        "inet.h": "c",
+        "bank_codes.h": "c"
     }
 }
