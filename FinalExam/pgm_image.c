@@ -17,13 +17,24 @@
 // Generate space to store the image in memory
 void allocateImage(image_t * image)
 {
+    //Allocate Memory
+    image->pixels = malloc (image->height * sizeof(pixel_t *));
+    //Allocate the Memory for all the data in the image
+    image->pixels[0] = calloc (image->height * image->width, sizeof(pixel_t));
 
+    //Add the rest of the pointers to the INDEX array
+    for (int i = 1; i < image->height; i++){
+        image->pixels[i] = image->pixels[0] + image->width * i;
+    }
 }
 
 // Release the dynamic memory used by an image
 void freeImage(image_t * image)
 {
-
+    //Free the DATA array
+    free (image->pixels[0]);
+    //Free index array
+    free (image->pixels);
 }
 
 // Copy an image to another structure
@@ -113,6 +124,7 @@ void readPGMTextData(pgm_t * pgm_image, FILE * file_ptr)
         {
             // Read the value for the pixel
             fscanf(file_ptr, "%hhu", &(pgm_image->image.pixels[i][j].value));
+            // printf("%d" , pgm_image->image.pixels[i][j].value);
         }
     }
 }
@@ -165,7 +177,7 @@ void writePGMFile(const char * filename, const pgm_t * pgm_image)
 
     // Write the header for the file
     fprintf(file_ptr, "%s\n", pgm_image->magic_number);
-    fprintf(file_ptr, "# %s\n", filename);
+    // fprintf(file_ptr, "# %s\n", filename);
     fprintf(file_ptr, "%d %d\n", pgm_image->image.width, pgm_image->image.height);
     fprintf(file_ptr, "%d\n", pgm_image->max_value);
     // Write the data acording to the type

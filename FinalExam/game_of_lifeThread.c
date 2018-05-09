@@ -1,7 +1,7 @@
 /*
     WRITE YOUR NAME HERE:
     SEUNG HOON LEE - A01021720
-    OPEN MP Version
+    THREAD VERSION
 
 
     Simulation of Conway's Game of Life using OpenMP
@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <omp.h>
 
 #include "pgm_image.h"
 // ADD YOUR EXTRA LIBRARIES HERE
@@ -98,26 +97,21 @@ void lifeSimulation(int iterations, char * start_file)
 
 void changeNewPGM(pgm_t * board_image, pgm_t * board_imageFinal, int iterations) {
     char write_PGM[STRING_SIZE];
-    int i, j, k, l, iters;
+    int i, j, l, k, iters;
 
     for(iters = 1; iters <= iterations; iters++ ){
-        //Use OpenMP
-        #pragma omp parallel private(i, j, k, l) shared(board_image, board_imageFinal, iterations) 
-        {
-            #pragma omp for
-            for(i = 0; i < board_image->image.width/2; i++ ) {
-                for(j = 0; j < board_image->image.height; j++ ) {
-                    changeLife(i, j, board_image, board_imageFinal);
-                }
-                // printf("%d", 1);
+        
+        for(i = 0; i < board_image->image.width/2; i++ ) {
+            for(j = 0; j < board_image->image.height; j++ ) {
+                changeLife(i, j, board_image, board_imageFinal);
             }
-            #pragma omp for
-            for(l = board_image->image.width/2; l < board_image->image.width; l++ ) {
-                for(k = 0; k < board_image->image.height; k++ ) {
-                    changeLife(l, k, board_image, board_imageFinal);
-                }
-                // printf("%d", 1);
+            // printf("%d", 1);
+        }
+        for(l = board_image->image.width/2; l < board_image->image.width; l++ ) {
+            for(k = 0; k < board_image->image.height; k++ ) {
+                changeLife(l, k, board_image, board_imageFinal);
             }
+            // printf("%d", 1);
         }
         snprintf(write_PGM, sizeof(write_PGM), "%d.pgm", iters);
         writePGMFile(write_PGM, board_imageFinal);

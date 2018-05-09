@@ -49,11 +49,11 @@ typedef struct pgm_struct
 void allocateImage(image_t * image);
 void freeImage(image_t * image);
 void copyPGM(const pgm_t * source, pgm_t * destination);
-void readPGMFile(const char * filename, pgm_t * pgm_image);
+void readPGMFile(const char * filename, pgm_t * pgm_image); //Leer
 void readPGMHeader(pgm_t * pgm_image, FILE * file_ptr);
 void readPGMTextData(pgm_t * pgm_image, FILE * file_ptr);
 void readPGMBinaryData(pgm_t * pgm_image, FILE * file_ptr);
-void writePGMFile(const char * filename, const pgm_t * pgm_image);
+void writePGMFile(const char * filename, const pgm_t * pgm_image); //Escribir 
 void writePGMTextData(const pgm_t * pgm_image, FILE * file_ptr);
 void writePGMBinaryData(const pgm_t * pgm_image, FILE * file_ptr);
 

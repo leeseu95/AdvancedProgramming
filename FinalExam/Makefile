@@ -3,11 +3,11 @@
 ### Variables for this project ###
 # These should be the only ones that need to be modified
 # The files that must be compiled, with a .o extension
-OBJECTS = game_of_life.o string_functions.o pgm_image.o
+OBJECTS = game_of_lifeThread.o string_functions.o pgm_image.o
 # The header files
 DEPENDS = string_functions.h pgm_image.h
 # The executable program to be created
-MAIN = game_of_life
+MAIN = game_of_lifeThread
 
 ### Variables for the compilation rules ###
 # These should work for most projects, but can be modified when necessary
