@@ -21,7 +21,7 @@
 #include "pgm_image.h"
 // ADD YOUR EXTRA LIBRARIES HERE
 
-#define STRING_SIZE 50
+#define STRING_SIZE 80
 
 ///// Function declarations /////
 void usage(const char * program);
@@ -33,7 +33,7 @@ void changeLife(int posX, int posY, pgm_t * board_image, pgm_t * board_imageFina
 
 int main(int argc, char * argv[])
 {
-    char * start_file = "Boards/sample_4.txt";
+    char * start_file = "Boards/pulsar.txt";
     int iterations = 5;
 
     printf("\n=== GAME OF LIFE ===\n");
@@ -79,7 +79,7 @@ void lifeSimulation(int iterations, char * start_file)
     //We make a new one to keep storing the original image to work on
     image_t image_finalTemp = {0, 0, NULL};
     pgm_t pgm_Final = {"", 0, image_finalTemp};
-    char writeFirst[STRING_SIZE] = "0.pgm";
+    char writeFirst[STRING_SIZE] = "./Images/0.pgm";
 
     //Prepare the images that we'll be modifying
     readPGMFile(start_file, &pgm_Initial);
@@ -92,43 +92,56 @@ void lifeSimulation(int iterations, char * start_file)
     changeNewPGM(&pgm_Initial, &pgm_Final, iterations);
 
     //Free our Image
-    freeImage(&image_initTemp);
-    freeImage(&image_finalTemp);
+    freeImage(&pgm_Initial.image);
+    freeImage(&pgm_Final.image);
 }
 
 void changeNewPGM(pgm_t * board_image, pgm_t * board_imageFinal, int iterations) {
     char write_PGM[STRING_SIZE];
-    int i, j, k, l, iters;
+    int i, j, k, l, o, p, m, a, iters;
 
     for(iters = 1; iters <= iterations; iters++ ){
-        //Use OpenMP
-        #pragma omp parallel private(i, j, k, l) shared(board_image, board_imageFinal, iterations) 
+        //Use OpenMP and divide it into 4 sections to do
+        #pragma omp parallel private(i, j, k, l, o, p, m, a) shared(board_image, board_imageFinal) 
         {
             #pragma omp for
-            for(i = 0; i < board_image->image.width/2; i++ ) {
+            for(i = 0; i < board_image->image.width/4; i++ ) { //In each for we iterate through the different rows of the board to change each cell
                 for(j = 0; j < board_image->image.height; j++ ) {
                     changeLife(i, j, board_image, board_imageFinal);
                 }
-                // printf("%d", 1);
             }
             #pragma omp for
-            for(l = board_image->image.width/2; l < board_image->image.width; l++ ) {
-                for(k = 0; k < board_image->image.height; k++ ) {
-                    changeLife(l, k, board_image, board_imageFinal);
+            for(k = board_image->image.width/4; k < board_image->image.width/2; k++ ) {
+                for(l = 0; l < board_image->image.height; l++ ) {
+                    changeLife(k, l, board_image, board_imageFinal);
                 }
-                // printf("%d", 1);
+            }
+            #pragma omp for
+            for(o = board_image->image.width/2; o < board_image->image.width*3/4; o++ ) {
+                for(p = 0; p < board_image->image.height; p++ ) {
+                    changeLife(o, p, board_image, board_imageFinal);
+                }
+            }
+            #pragma omp for
+            for(m = board_image->image.width*3/4; m < board_image->image.width; m++ ) {
+                for(a = 0; a < board_image->image.height; a++ ) {
+                    changeLife(m, a, board_image, board_imageFinal);
+                }
             }
         }
-        snprintf(write_PGM, sizeof(write_PGM), "%d.pgm", iters);
+        //At the end we save the file in a number.pgm file
+        snprintf(write_PGM, sizeof(write_PGM), "./Images/%d.pgm", iters);
         writePGMFile(write_PGM, board_imageFinal);
+        //We restart our boards to what they should be for the next iteration
         equalPGMImages(board_image, board_imageFinal);
     }
 }
 
+//Equal both boards so that we can keep iterating through the boards
 void equalPGMImages(pgm_t * board_image, pgm_t * board_imageFinal) {
-    for( int i = 0; i < board_image->image.width; i++ ) {
+    for( int i = 0; i < board_image->image.width; i++ ) { //Iterate through both rows/cols
         for( int j = 0; j < board_image->image.height; j++ ) {
-            board_image->image.pixels[i][j].value = board_imageFinal->image.pixels[i][j].value;
+            board_image->image.pixels[i][j].value = board_imageFinal->image.pixels[i][j].value; //Equal them
         }
     }
 }

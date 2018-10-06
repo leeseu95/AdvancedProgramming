@@ -16,9 +16,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "pgm_image.h"
 // ADD YOUR EXTRA LIBRARIES HERE
+#define NTHREADS 4
+
+//Argument structure
+typedef struct arg_struct {
+    pgm_t pgm_init;
+    pgm_t pgm_final;
+    int currentRow; //Current Row
+} arg_t;
 
 #define STRING_SIZE 50
 
@@ -28,11 +37,12 @@ void lifeSimulation(int iterations, char * start_file);
 void equalPGMImages(pgm_t * board_image, pgm_t * board_imageFinal);
 void changeNewPGM(pgm_t * board_image, pgm_t * board_imageFinal, int interations);
 void changeLife(int posX, int posY, pgm_t * board_image, pgm_t * board_imageFinal);
+void * changePGMThread(void * arg);
 // ADD YOUR FUNCTION DECLARATIONS HERE
 
 int main(int argc, char * argv[])
 {
-    char * start_file = "Boards/sample_4.txt";
+    char * start_file = "Boards/pulsar.txt";
     int iterations = 5;
 
     printf("\n=== GAME OF LIFE ===\n");
@@ -78,7 +88,7 @@ void lifeSimulation(int iterations, char * start_file)
     //We make a new one to keep storing the original image to work on
     image_t image_finalTemp = {0, 0, NULL};
     pgm_t pgm_Final = {"", 0, image_finalTemp};
-    char writeFirst[STRING_SIZE] = "0.pgm";
+    char writeFirst[STRING_SIZE] = "./Images/0.pgm";
 
     //Prepare the images that we'll be modifying
     readPGMFile(start_file, &pgm_Initial);
@@ -91,38 +101,61 @@ void lifeSimulation(int iterations, char * start_file)
     changeNewPGM(&pgm_Initial, &pgm_Final, iterations);
 
     //Free our Image
-    freeImage(&image_initTemp);
-    freeImage(&image_finalTemp);
+    freeImage(&pgm_Initial.image);
+    freeImage(&pgm_Final.image);
 }
 
 void changeNewPGM(pgm_t * board_image, pgm_t * board_imageFinal, int iterations) {
     char write_PGM[STRING_SIZE];
-    int i, j, l, k, iters;
+    int iters;
+
+    //Create the threads we'll be using
+    pthread_t thread0[NTHREADS];
+    void *retvals[NTHREADS];
+    int count;
+
+    //Create the arguments we'll be using
+    arg_t args = {*board_image, *board_imageFinal, 0};
 
     for(iters = 1; iters <= iterations; iters++ ){
         
-        for(i = 0; i < board_image->image.width/2; i++ ) {
-            for(j = 0; j < board_image->image.height; j++ ) {
-                changeLife(i, j, board_image, board_imageFinal);
+        //Create each thread and increase the row number that will be taken care of
+        for(count = 0; count < NTHREADS; count++) {
+            args.currentRow = count;
+            if(pthread_create(&thread0[count], NULL, *changePGMThread, (void *) &args) != 0){
+                printf("ERROR");   
             }
-            // printf("%d", 1);
         }
-        for(l = board_image->image.width/2; l < board_image->image.width; l++ ) {
-            for(k = 0; k < board_image->image.height; k++ ) {
-                changeLife(l, k, board_image, board_imageFinal);
+        for(int i =0; i < count; i++) {
+            if(pthread_join(thread0[i], &retvals[i]) != 0){
+                printf("ERROR");   
             }
-            // printf("%d", 1);
         }
-        snprintf(write_PGM, sizeof(write_PGM), "%d.pgm", iters);
+        snprintf(write_PGM, sizeof(write_PGM), "./Images/%d.pgm", iters);
         writePGMFile(write_PGM, board_imageFinal);
+        //Reconvert our images to the next step with our function
         equalPGMImages(board_image, board_imageFinal);
     }
 }
 
+//Thread function that will be taking care of changing the pgm image in each row specified
+void * changePGMThread(void * arg) {
+    arg_t * arguments = arg;
+    // printf("%d\n", arguments->currentRow); //Debug
+    //Iterate through 4 different rows of the whole image in each thread
+    for(int i = 0; i < ((arguments->pgm_init.image.width * (arguments->currentRow+1))/4); i++ ) { //Iterate through the rows and cols
+        for(int j = 0; j < arguments->pgm_init.image.height; j++ ) {
+            changeLife(i, j, &arguments->pgm_init, &arguments->pgm_final); //Send our base image, and our modifying image
+        }
+    }
+    pthread_exit(NULL);
+}
+
+//We swap the images (the done one will be our new base one to draw on)
 void equalPGMImages(pgm_t * board_image, pgm_t * board_imageFinal) {
-    for( int i = 0; i < board_image->image.width; i++ ) {
+    for( int i = 0; i < board_image->image.width; i++ ) { //Iterate through rows and cols
         for( int j = 0; j < board_image->image.height; j++ ) {
-            board_image->image.pixels[i][j].value = board_imageFinal->image.pixels[i][j].value;
+            board_image->image.pixels[i][j].value = board_imageFinal->image.pixels[i][j].value; //Equal their values
         }
     }
 }
@@ -138,9 +171,8 @@ void changeLife(int posX, int posY, pgm_t * board_image, pgm_t * board_imageFina
     //Have a counter for the neighbours
     int neighboursAlive = 0;
 
-    // printf("Val: %d ", board_image->image.pixels[posX][posY].value);
-    //Check if either x or Y are in an edge
-    //[-1, -1] Not on edge
+    // printf("Val: %d ", board_image->image.pixels[posX][posY].value); //Debugging
+    //Check if either x or Y are in an edge and put them in their respective place
     if(posX == 0) 
         posXLeft = board_image->image.width - 1;
     else if (posX == board_image->image.width - 1)

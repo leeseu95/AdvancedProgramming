@@ -3,11 +3,13 @@
 ### Variables for this project ###
 # These should be the only ones that need to be modified
 # The files that must be compiled, with a .o extension
-OBJECTS = game_of_lifeThread.o string_functions.o pgm_image.o
+OBJECTS = game_of_life.o string_functions.o pgm_image.o
+OBJECTSTHREAD = game_of_lifeThread.o string_functions.o pgm_image.o
 # The header files
 DEPENDS = string_functions.h pgm_image.h
 # The executable program to be created
-MAIN = game_of_lifeThread
+MAIN = game_of_life
+THREAD = game_of_lifeThread
 
 ### Variables for the compilation rules ###
 # These should work for most projects, but can be modified when necessary
@@ -23,10 +25,13 @@ LDLIBS = -lm -fopenmp
 # These should work for most projects without change
 
 # Default rule
-all: $(MAIN)
+all: $(MAIN) $(THREAD)
 
 # Rule to make the executable
 $(MAIN): $(OBJECTS)
+	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
+
+$(THREAD): $(OBJECTSTHREAD)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Rule to make the object files
@@ -35,7 +40,7 @@ $(MAIN): $(OBJECTS)
 
 # Clear the compiled files
 clean:
-	rm -rf *.o $(MAIN)
+	rm -rf *.o $(MAIN) $(THREAD)
 	
 # Indicate the rules that do not refer to a file
 .PHONY: clean all
